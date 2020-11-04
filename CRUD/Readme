@@ -1,1 +1,18 @@
 Use google Apps Script , Google Spreadsheet, Google Drive and Gmail, Javascript, HTML, AngularJS to realize CRUD.
+1. Create a folder on My Drive, Name it
+2. Go to this folder, create a Google Apps script, and name it, fork Code.gs to Code.gs tab, then create new html file named "index", and fork index.html to index.html tab
+3. create a folder where for creating subfolders and replace folder id in Code.gs with this folder id
+4. Create a Spreadsheet, rename first sheet to "Log", and first row set header:
+   Date,	Department,	Job Number,	Product Number,	Quantity,	Status,	Check By,	Note,	Photo Link,	Report To,	User,	Permisson,	Delete
+   add one sheet name "Count", and set A1 cell:"=query(Log!A1:M,"select K,count(K) where M=false and A is not null group by K",1)"
+   add one sheet name "Parameters", and fill as:
+       Status	Department	Check By
+       Accept	Dept 1	    Operator 1
+       Hold	  Dept 2	    Operator 2
+       Reject	Dept 3	    Operator 3
+  add one sheet name "Parameters", and fill first row as:
+      Dept 1	Dept 2	Dept 3
+  put emails under each Dept
+  finally copy id of Spreadsheet to replace xxxxxxxxxx of fisrt code in Code.gs
+    var spreadsheetId = 'xxxxxxxxxx'; //"CRUD" 
+   
