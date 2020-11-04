@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>
+		CRUD Sample
+	</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+	<script>
+	var editFlag;
+
+// Prevent forms from submitting.
+function preventFormSubmit() {
+  var forms = document.querySelectorAll("form");
+  for (var i = 0; i < forms.length; i++) {
+    forms[i].addEventListener("submit", function(event) {
+      event.preventDefault();
+    });
+  }
+}
+
+window.addEventListener("load", preventFormSubmit);
+
+function handleFormSubmit(formObject) {
+  formObject.submit.disabled = true;
+  var div = document.getElementById("output");
+  div.innerHTML = "Processing...";
+
+  google.script.run.withSuccessHandler(updateUrl).processForm(formObject);
+}
+
+function updateUrl(response) {
+  //response:id of item
+  document.getElementById("myForm").reset();
+  if (response.count != 5) {
+    document.getElementById("submit").disabled = false;
+    document.getElementById("create").disabled = false;
+  } else {
+    document.getElementById("submit").disabled = true;
+    document.getElementById("create").disabled = true;
+  }
+  var div = document.getElementById("Quantity");
+  div.value = "";
+
+  var div = document.getElementById("output");
+  div.innerHTML = "Processing Done!";
+  if (response.folderLink != "") {
+    var div = document.getElementById("folder");
+    div.innerHTML =
+      '<a href="' +
+      response.folderLink +
+      '" target="_blank">' +
+      response.folderName +
+      "</a>";
+  }
+
+  if (editFlag) {
+    var scope = angular.element(document.getElementById("MainWrap")).scope();
+    scope.$apply(function() {
+      scope.updateEdit();
+    });
+  } else {
+    var scope = angular.element(document.getElementById("MainWrap")).scope();
+    scope.$apply(function() {
+      scope.updateCustomRequest();
+    });
+    //
+  }
+}
+
+
+	
+</script>
+</head>
+
+<body id="MainWrap" ng-app="myApp" ng-controller="userCtrl">
+	<div class="w3-container" style="overflow-x:auto">
+		<h3 style='float:text-align: center' ng-hide="hidetable">CRUD Sample Log</h3>
+		<h4>
+			(For testing purpose every user can enter 5 records except deleted ones, you have {{5-count}} record(s) to
+			enter!)
+			<br>
+         (All records will be deleted everyday!!!)
+      </h4>
+			<form class="form-inline" ng-hide="hidetable">
+				<label>Search:(Can put more search here)</label> <input ng-model="searchText" type="text" ng-change="onChange()"  autofocus>
+           </form>
+				<table id="logs" class="w3-table-all w3-bordered w3-striped" ng-hide="hidetable">
+					<tr>
+						<th>Date</th>
+						<th>Dept</th>
+						<th>Job Number</th>
+						<th>Product Number</th>
+						<th>Quantity</th>
+						<th>Status</th>
+						<th>Check By</th>
+						<th>Note</th>
+						<th>Edit</th>
+						<th>Delete</th>
+					</tr>
+					<tr ng-repeat="item in data| orderBy: 'item[0]':true |filter:searchText| limitTo:numLimit:start">
+						<td>{{ item[0] }}</td>
+						<td>{{ item[1] }}</td>
+						<td ng-show="{{item[11] }}"><a ng-href="{{ item[8] }}" target="_blank">{{ item[2] }}</a> </td>
+						<td ng-show="{{!item[11] }}">{{ item[2] }} </td>
+						<td>{{ item[3]}}</td>
+						<td>{{ item[4] }} </td>
+						<td>{{ item[5] }}</td>
+						<td>{{ item[6] }}</td>
+						<td>{{ item[7] }}</td>
+						<td>
+							<button class="w3-btn w3-ripple" ng-click="editItem(data.indexOf(item),item[13])" ng-show="{{item[11] && !item[12]}}" ng-disabled="{{item[12] }}">&#9998; Edit</button>
+						<td>
+							<button class="w3-btn w3-ripple" ng-click="deleteItem(data.indexOf(item),item[13])" ng-show="{{ item[11] && !item[12] }}" ng-disabled="{{item[12] }}">&#9998; Delete</button>
+							<button class="w3-btn w3-ripple" ng-click="deleteItem(data.indexOf(item),item[13])" ng-show="{{ item[11] && item[12]}}" ng-disabled="{{item[12] }}">&#9998; Deleted</button>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<span style="float:left;padding:5px"><a ng-hide="hidePrev()" href="" ng-click="PrevPage()">Prev</a></span>
+						</td>
+						<td colspan="2">
+							<div class="w3-center">{{numLimit}} records per page</div>
+						</td>
+						<td colspan="2">
+							<div class="w3-center">Page# {{currentPage}} of {{pages}}</div>
+						</td>
+						<td colspan="3">
+							<span style="float:right;padding:5px"><a ng-hide="hideNext()" href="" ng-click="nextPage()">Next</a></span>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<span style="float:left;padding:5px"><a ng-hide="!forward" href="" ng-click="loadBack()">Load 100 backwardrecord</a></span>
+						</td>
+						<td colspan="2">
+							<div class="w3-center">100 records per big page</div>
+						</td>
+						<td colspan="2">
+							<div class="w3-center">Page# {{pageNumber}} of {{bigPages}}</div>
+						</td>
+						<td colspan="3">
+							<span style="float:right;padding:5px"><a ng-hide="!backward" href="" ng-click="loadFor()">Load 100 forward  record</a></span>
+						</td>
+					</tr>
+				</table>
+				<br>
+				<button  id="create"  class="w3-btn w3-green w3-ripple" ng-click="addNew()"    ng-show=Permisson ng-hide="!hideform" ng-disabled=!Permission>&#9998; Create New Inspection</button>
+				<button class="w3-btn w3-green w3-ripple" ng-click="hideForm()"   ng-hide="hideform">&#9998; Hide Form</button>
+				<form id="myForm" name="myForm" onsubmit="handleFormSubmit(this)" ng-hide="hideform">
+					<table>
+						<tr>
+							<h4 ng-hide="edit">Create New Record:</h4>
+						</tr>
+						<tr>
+							<h3 ng-show="edit">Edit Record:</h3>
+						</tr>
+						<tr>
+							<td>
+								<label>Date:</label>
+							</td>
+							<td>
+								<input name="Date" id="Date" class="w3-input w3-border" type="Date"   ng-model="Date"  required >
+                                
+                            </td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Department:</label>
+							</td>
+							<td>
+								<input name="Dept" id="Dept" class="w3-input w3-border" type="text" ng-model="Dept"  placeholder="Department" list="deptList" value="" required>
+								<datalist id="deptList">
+									<option ng-repeat="x in dataParameters" value={{x[1]}}>{{x[1]}}</option>
+								</datalist>
+							</td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Job Number:</label>
+							</td>
+							<td>
+								<input name="Job" id="Job" class="w3-input w3-border" type="text" ng-model="Job"  placeholder="Job Number" required>
+                            </td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Product Number:</label>
+							</td>
+							<td>
+								<input name="Part" id="Part" class="w3-input w3-border" type="text" ng-model="Part"   placeholder="Part Number" required>
+                            </td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Quantity:</label>
+							</td>
+							<td>
+								<input name="Quantity" id="Quantity" class="w3-input w3-border" type="number" ng-model="Quantity"     placeholder="Quantity" required ng-pattern="/^[0-9]*$/" min="0">
+                            </td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Satus:</label>
+							</td>
+							<td>
+								<input name="Status" id='Status' class="w3-input w3-border" type="text"  ng-model="Status" placeholder="Status"  list="StatusList"  required>
+								<datalist id="StatusList">
+									<option ng-repeat="x in dataParameters" value={{x[0]}}>{{x[0]}}</option>
+								</datalist>
+							</td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Check By:</label>
+							</td>
+							<td>
+								<input name="Check" class="w3-input w3-border" type="text" ng-model="Check"  placeholder="Check By" list="checkList" required>
+								<datalist id="checkList">
+									<option ng-repeat="x in dataParameters" value={{x[2]}}>{{x[2]}}</option>
+								</datalist>
+							</td>
+                            <td>
+								 <div class="w3-container" >
+                                  <p class="w3-tooltip"><font color="red">*</font> <span style="position:absolute;left:0;top:0;width:100px"  class="w3-text w3-tag"><em>Must enter</em></span> </p>       
+                                </div>
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Note:</label>
+							</td>
+							<td>
+								<textarea name="Note" id="Note" class="w3-input w3-border" type="text" ng-model="Note"  placeholder="Note">
+                                </textarea>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<p>Photos Folder:</p>
+							</td>
+							<td>
+								<div id="folder"></div>
+							</td>
+						</tr>
+						<tr ng-hide="true">
+							<td>
+								<label>Row Index:</label>
+							</td>
+							<td>
+								<input name="rowID" id="rowID" class="w3-input w3-border" type="number" ng-model="rowID"  ng-hide="true">
+                            </td>
+						</tr>
+						<tr>
+							<td>
+								<label>Report To:</label>
+							</td>
+							<td>
+								<div ng-repeat="x in dataParameters">
+									<input  name="Email"  type="checkbox"  value={{x[1]}}>{{x[1]}}<br>
+                                </div>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td><input type="submit" class="submit" name="submit" id="submit" value="Submit" ng-disabled=!Permission ></td>
+						</tr>
+						<tr>
+							<td>
+								<p>Message:</p>
+							</td>
+							<td>
+								<div id="output"></div>
+							</td>
+						</tr>
+						<br>
+         </table>
+	</form>
+	<script>
+		angular.module("myApp", []).controller("userCtrl", function($scope) {
+  $scope.pageNumber = 1;
+  google.script.run
+    .withSuccessHandler(function(response) {
+      $scope.$apply(function() {
+        $scope.data = response.data;
+        $scope.count = response.count;
+        if (response.count != 5) {
+          document.getElementById("submit").disabled = false;
+          document.getElementById("create").disabled = false;
+        } else {
+          document.getElementById("submit").disabled = true;
+          document.getElementById("create").disabled = true;
+        }
+        console.log("count2:" + $scope.count);
+        console.log("got Data" + $scope.data.length);
+        $scope.bigPages = response.bigpages;
+        $scope.backward = response.backward;
+        $scope.forward = response.forward;
+        // $scope.data.splice(0,1);
+
+        $scope.numLimit = 5;
+        $scope.currentPage = 1;
+        $scope.start = 0;
+        $scope.pages = Math.ceil($scope.data.length / $scope.numLimit);
+
+        $scope.hidePrev = function() {
+          if ($scope.start === 0) {
+            return true;
+          } else {
+            return false;
+          }
+        };
+
+        $scope.hideNext = function() {
+          if ($scope.start + $scope.numLimit < $scope.data.length) {
+            return false;
+          } else {
+            return true;
+          }
+          
+        };
+        $scope.nextPage = function() {
+          console.log("next pages");
+          $scope.currentPage++;
+          $scope.start = $scope.start + $scope.numLimit;
+          console.log($scope.start);
+        };
+
+        $scope.PrevPage = function() {
+          if ($scope.currentPage > 1) {
+            $scope.currentPage--;
+          }
+          console.log("next pages");
+          $scope.start = $scope.start - $scope.numLimit;
+          console.log($scope.start);
+        };
+      });
+    })
+    .withFailureHandler(errorHandler1)
+    .getDataPage($scope.pageNumber);
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      $scope.$apply(function() {
+        data.splice(0, 1);
+        $scope.dataParameters = data;
+      });
+    })
+    .withFailureHandler(errorHandler2)
+    .getParameters();
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      $scope.$apply(function() {
+        $scope.Permission = data;
+      });
+    })
+    .withFailureHandler(errorHandler3)
+    .getPermission();
+
+  $scope.Date;
+  $scope.Dept;
+  $scope.Job;
+  $scope.Part;
+  $scope.Quantity;
+  $scope.Status;
+  $scope.Check;
+  $scope.Note;
+  $scope.delete;
+
+  $scope.edit = false;
+  $scope.error = false;
+  $scope.incomplete = false;
+  $scope.hideform = true;
+  $scope.hidetable = false;
+  $scope.Display = false;
+
+  $scope.rowID;
+
+  $scope.count;
+
+  $scope.searchText;
+
+  function errorHandler1() {
+    var text = "Error 1  ...";
+
+    document.getElementById("output").innerHTML = text;
+  }
+
+  function errorHandler2() {
+    var text = "Error 2...";
+
+    document.getElementById("output").innerHTML = text;
+  }
+  function errorHandler3() {
+    var text = "Error! 3...";
+
+    document.getElementById("output").innerHTML = text;
+  }
+
+  $scope.onChange = function() {
+    $scope.currentPage = 1;
+    $scope.start = 0;
+  };
+
+  $scope.loadBack = function() {
+    $scope.pageNumber++;
+    google.script.run
+      .withSuccessHandler(function(response) {
+        $scope.$apply(function() {
+          $scope.data = response.data;
+          $scope.count = response.count;
+          if (response.count != 5) {
+            document.getElementById("submit").disabled = false;
+            document.getElementById("create").disabled = false;
+          } else {
+            document.getElementById("submit").disabled = true;
+            document.getElementById("create").disabled = true;
+          }
+          console.log("count3:" + $scope.count);
+          $scope.bigPages = response.bigpages;
+          $scope.backward = response.backward;
+          $scope.forward = response.forward;
+          //  $scope.data.splice(0,1);
+
+          $scope.numLimit = 5;
+          $scope.currentPage = 1;
+          $scope.start = 0;
+          $scope.pages = Math.ceil($scope.data.length / $scope.numLimit);
+          console.log("got Data" + $scope.data.length);
+          $scope.hidePrev = function() {
+            if ($scope.start === 0) {
+              return true;
+            } else return false;
+          };
+
+          $scope.hideNext = function() {
+            if ($scope.start + $scope.numLimit < $scope.data.length) {
+              return false;
+            } else return true;
+          };
+          $scope.nextPage = function() {
+            console.log("next pages");
+            $scope.currentPage++;
+            $scope.start = $scope.start + $scope.numLimit;
+            console.log($scope.start);
+          };
+
+          $scope.PrevPage = function() {
+            if ($scope.currentPage > 1) {
+              $scope.currentPage--;
+            }
+            console.log("next pages");
+            $scope.start = $scope.start - $scope.numLimit;
+            console.log($scope.start);
+          };
+        });
+      })
+      .withFailureHandler(errorHandler)
+      .getDataPage($scope.pageNumber);
+  };
+
+  $scope.loadFor = function() {
+    $scope.pageNumber--;
+    google.script.run
+      .withSuccessHandler(function(response) {
+        $scope.$apply(function() {
+          $scope.data = response.data;
+          $scope.count = response.count;
+          if (response.count != 5) {
+            document.getElementById("submit").disabled = false;
+            document.getElementById("create").disabled = false;
+          } else {
+            document.getElementById("submit").disabled = true;
+            document.getElementById("create").disabled = true;
+          }
+          console.log("count4:" + $scope.count);
+          $scope.bigPages = response.bigpages;
+          $scope.backward = response.backward;
+          $scope.forward = response.forward;
+          //  $scope.data.splice(0,1);
+
+          $scope.numLimit = 5;
+          $scope.currentPage = 1;
+          $scope.start = 0;
+          $scope.pages = Math.ceil($scope.data.length / $scope.numLimit);
+          console.log("got Data" + $scope.data.length);
+          $scope.hidePrev = function() {
+            if ($scope.start === 0) {
+              return true;
+            } else return false;
+          };
+
+          $scope.hideNext = function() {
+            if ($scope.start + $scope.numLimit < $scope.data.length) {
+              return false;
+            } else return true;
+          };
+          $scope.nextPage = function() {
+            console.log("next pages");
+            $scope.currentPage++;
+            $scope.start = $scope.start + $scope.numLimit;
+            console.log($scope.start);
+          };
+
+          $scope.PrevPage = function() {
+            if ($scope.currentPage > 1) {
+              $scope.currentPage--;
+            }
+            console.log("next pages");
+            $scope.start = $scope.start - $scope.numLimit;
+            console.log($scope.start);
+          };
+        });
+      })
+      .withFailureHandler(errorHandler)
+      .getDataPage($scope.pageNumber);
+  };
+
+  $scope.hideForm = function() {
+    $scope.hideform = true;
+    $scope.hidetable = false;
+    $scope.edit = false;
+  };
+
+  $scope.editItem = function(index, id) {
+    document.getElementById("submit").disabled = false;
+    editFlag = true;
+    console.log(id);
+    console.log(index);
+    console.log($scope.data[index][5]);
+    //  console.log($scope.data[index]);
+    // return;
+    $scope.Update = false;
+    //$scope.hidetable = true;
+    $scope.hideform = false;
+
+    $scope.rowID = id;
+
+    $scope.edit = true;
+
+    $scope.Date = new Date($scope.data[index][0]);
+    $scope.Dept = $scope.data[index][1];
+    $scope.Job = $scope.data[index][2];
+    $scope.Part = $scope.data[index][3];
+    $scope.Quantity = $scope.data[index][4];
+    $scope.Status = $scope.data[index][5];
+
+    $scope.Check = $scope.data[index][6];
+    $scope.Note = $scope.data[index][7];
+  };
+
+  $scope.addNew = function() {
+    //return;
+    editFlag = false;
+    $scope.hidetable = false;
+    $scope.hideform = false;
+    $scope.rowID = -1;
+    $scope.edit = false;
+    //$scope.incomplete = true;
+
+    //var todayString=Utilities.formatDate( new Date(), Session.getScriptTimeZone() , "M/d/yyyy");
+    //$scope.ID=0;
+    $scope.Date = new Date();
+    $scope.Part = "";
+    $scope.Supplier1 = "";
+    $scope.PO = "";
+    $scope.Quantity;
+    $scope.Unit = "PC";
+    $scope.Colour = "";
+    $scope.Gloss = "";
+    $scope.Thicknes = "";
+    $scope.StatusNG = "Accept";
+    $scope.Issue = "No Issue";
+    $scope.Comment = "";
+    $scope.Height;
+    $scope.Weight;
+    $scope.emailJames = false;
+    $scope.emailRolando = false;
+    $scope.emailNimesh = false;
+  };
+
+  $scope.deleteItem = function(index, id) {
+    google.script.run
+      .withSuccessHandler($scope.updateCustomRequest)
+      .deleteItem(id);
+  };
+
+  $scope.updateEdit = function() {
+    $scope.updateCustomRequest();
+    $scope.hideForm();
+  };
+
+  $scope.updateCustomRequest = function() {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        $scope.$apply(function() {
+          $scope.data = response.data;
+          $scope.count = response.count;
+          if (response.count != 5) {
+            document.getElementById("submit").disabled = false;
+            document.getElementById("create").disabled = false;
+          } else {
+            document.getElementById("submit").disabled = true;
+            document.getElementById("create").disabled = true;
+          }
+          console.log("count5:" + $scope.count);
+
+          $scope.bigPages = response.bigpages;
+          $scope.backward = response.backward;
+          $scope.forward = response.forward;
+          //  $scope.data.splice(0,1);
+
+          $scope.numLimit = 5;
+          $scope.currentPage = 1;
+          $scope.start = 0;
+          $scope.pages = Math.ceil($scope.data.length / $scope.numLimit);
+          console.log("got Data" + $scope.data.length);
+          $scope.hidePrev = function() {
+            if ($scope.start === 0) {
+              return true;
+            } else return false;
+          };
+
+          $scope.hideNext = function() {
+            if ($scope.start + $scope.numLimit < $scope.data.length) {
+              return false;
+            } else return true;
+          };
+          $scope.nextPage = function() {
+            console.log("next pages");
+            $scope.currentPage++;
+            $scope.start = $scope.start + $scope.numLimit;
+            console.log($scope.start);
+          };
+
+          $scope.PrevPage = function() {
+            if ($scope.currentPage > 1) {
+              $scope.currentPage--;
+            }
+            console.log("next pages");
+            $scope.start = $scope.start - $scope.numLimit;
+            console.log($scope.start);
+          };
+        });
+      })
+      .withFailureHandler(errorHandler1)
+      .getDataPage($scope.pageNumber);
+  };
+}); // end of control
+
+/**
+ * Displays an error message within the #result element.
+ *
+ * @param {string} message The error message to display.
+ */
+function showError(message) {
+  document.getElementById("result").innerHTML = "Error: " + message;
+}
+
+function addLine(title, file) {
+  var tabLines = document.getElementById("tabLines");
+  var tabLinesRow = tabLines.insertRow(tabLines.rows.length);
+  var col1html =
+    "<input type='button' value='Remove' onclick='removeLine(this);'>";
+  var col2html =
+    "<input type='text' value='" + title + "' name='title' size='30' readonly>";
+  //var col3html ="<input type='text' value='"+file+"' name='fileUpLoad'   size='30' readonly>";
+  var col3html =
+    "<img name='imageoutput' id='imageoutput' src =" +
+    URL.createObjectURL(file) +
+    " width='40' height='40'>";
+  //var col4html = title;
+
+  var col1 = tabLinesRow.insertCell(0);
+  col1.innerHTML = col1html;
+  var col2 = tabLinesRow.insertCell(1);
+  col2.innerHTML = col2html;
+  //var col3 = tabLinesRow.insertCell(2); col3.innerHTML=col3html;
+  var col3 = tabLinesRow.insertCell(2);
+  col3.innerHTML = col3html;
+}
+
+function removeLine(lineItem) {
+  var i = lineItem.parentNode.parentNode.rowIndex;
+
+  removefileinTable(i);
+}
+
+function removefileinTable(rowIndex) {
+  allFiles.splice(rowIndex, 1);
+  document.getElementById("allFiles").innerHTML = allFiles.length; // allFiles.length;
+}
+
+function cleartable(table) {
+  var i;
+  var x = document.getElementById(table).rows.length;
+  for (i = 0; i < x; i++) {
+    document.getElementById(table).deleteRow(0);
+  }
+}
+
+function reset() {
+  document.getElementById("Status1").innerHTML = "Accept";
+
+  var tabLines = document.getElementById("tabLines");
+  var tabLinesRow = tabLines.rows.length;
+
+  var i;
+  for (i = 0; i < tabLinesRow; i++) {
+    tabLines.deleteRow(0);
+  }
+}
+
+</script>
+</div>
+</body>
+
+
+</html>
