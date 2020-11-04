@@ -1,6 +1,6 @@
 Use google Apps Script , Google Spreadsheet, Google Drive and Gmail, Javascript, HTML, AngularJS to realize CRUD.
 1. Create a folder on My Drive, Name it
-2. Go to this folder, create a Google Apps script, and name it, fork Code.gs to Code.gs tab, then create new html file named "index", and fork index.html to index.html tab
+2. Go to this folder, create a Google Apps script, and name it, copy Code.gs to Code.gs tab, then create new html file named "index", and copy index.html to index.html tab
 3. create a folder where for creating subfolders and replace folder id in Code.gs with this folder id
 4. Create a Spreadsheet, rename first sheet to "Log", and first row set header:
    Date,	Department,	Job Number,	Product Number,	Quantity,	Status,	Check By,	Note,	Photo Link,	Report To,	User,	Permisson,	Delete
