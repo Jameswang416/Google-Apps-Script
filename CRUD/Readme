@@ -8,7 +8,7 @@ Use google Apps Script , Google Spreadsheet, Google Drive and Gmail, Javascript,
    add one sheet name "Parameters", and fill as:
        Status	Department	Check By
        Accept	Dept 1	    Operator 1
-       Hold	  Dept 2	    Operator 2
+       Hold	   Dept 2	    Operator 2
        Reject	Dept 3	    Operator 3
   add one sheet name "Parameters", and fill first row as:
       Dept 1	Dept 2	Dept 3
