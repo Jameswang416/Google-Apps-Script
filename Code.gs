@@ -2,7 +2,7 @@ var spreadsheetId = 'xxxxxxxxxx'; //"CRUD" Spreadsheet Id
 
 function doGet() {
 
-	return HtmlService.createHtmlOutputFromFile('index1');
+	return HtmlService.createHtmlOutputFromFile('index');
 }
 
 function getEmail() {
@@ -35,7 +35,7 @@ function getData() {
 	for (var row = 1; row < data.length; row++) {
 
 
-		data[row][0] = Utilities.formatDate(data[row][0], Session.getScriptTimeZone(), "M/d/yyyy"); //date Column
+		data[row][0] = Utilities.formatDate(data[row][0], Session.getScriptTimeZone(), "M/d/yyyy"); // convert date to string
 	}
 
 	return data;
@@ -79,7 +79,7 @@ function getDataPage(pageNumber) { //  100 rows per page
 
 			data[row][0] = Utilities.formatDate(data[row][0], Session.getScriptTimeZone(), "M/d/yyyy");
 
-			data[row][11] = data[row][10] == Session.getActiveUser().getEmail() && getCount() < 6;
+			data[row][11] = data[row][10] == Session.getActiveUser().getEmail() && getCount() < 6;// set permission, get TRUE if current record created by current user and total records no more than 6
 
 
 		}
@@ -271,9 +271,9 @@ function deleteItem(id) {
 	SpreadsheetApp.flush();
 }
 
-function createSubfolder(subfolderName) {
+function createSubfolder(subfolderName) {//create subfolder if it is not exist, return link of the folder
 
-	var parentFolderId = "dddddddddddd"; //folder where screate subfoolder by job number
+	var parentFolderId = "dddddddddddd"; //folder id under which subfoolders created by job number
 	var parentFolder = DriveApp.getFolderById(parentFolderId);
 	var folder;
 	try {
@@ -288,17 +288,17 @@ function createSubfolder(subfolderName) {
 	return (link);
 }
 
-function deleteAll(){//delete all records and folders everyday by trigger 
+function deleteAll(){//delete all records in "Log" and subfolders everyday by trigger 
     var ss = SpreadsheetApp.openById(spreadsheetId); //Spreadsheet name;CRUD	
-	  var logSheet = ss.getSheetByName('Log');
+    var logSheet = ss.getSheetByName('Log');
     var column=logSheet.getLastColumn();
-    var header= logSheet.getRange(1,1,1,column).getValues();;
-    logSheet.clear();
-    logSheet.getRange(1,1,1,column).setValues(header);
-    var parentFolderId = "19C6Il73gjIcmnytInpTd8lfgjjwECCe4"; //folder:CRUD/Upload
-	  var parentFolder = DriveApp.getFolderById(parentFolderId);
-	  var folders=parentFolder.getFolders();
-	  while (folders.hasNext()) {
+    var header= logSheet.getRange(1,1,1,column).getValues();// save header of Log
+    logSheet.clear();// clear Log sheet
+    logSheet.getRange(1,1,1,column).setValues(header);// set header
+    var parentFolderId = "dddddddddd"; //folder id under which subfoolders created by job number
+    var parentFolder = DriveApp.getFolderById(parentFolderId);
+    var folders=parentFolder.getFolders();
+    while (folders.hasNext()) {
       folders.next().setTrashed(true);
     }
   
