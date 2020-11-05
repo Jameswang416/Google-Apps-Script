@@ -15,4 +15,11 @@ Use google Apps Script , Google Spreadsheet, Google Drive and Gmail, Javascript,
   put emails under each Dept
   finally copy id of Spreadsheet to replace xxxxxxxxxx of fisrt code in Code.gs
     var spreadsheetId = 'xxxxxxxxxx'; //"CRUD" 
+5. Record level CRUD and display control, user only can Edit,Delete the records he(she) create, and also limited 5 records can be created besides deleted records
+6. Display control:
+   each time display one small page(5 records) come from big page, 
+   each time load one big page(max 100 records) from sheet "Log", 
+   display order by Date, last create first display,
+   dynamic refresh display(actually reload data) when user submit record.
+7. Setup trigger dayly to run "deleteAll()"
    
